@@ -7,11 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EF1539362633031A004DD930 /* midiDefines.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1539352633031A004DD930 /* midiDefines.swift */; };
 		EFC1C8A2262070A4008C166A /* Configuration.h in Headers */ = {isa = PBXBuildFile; fileRef = EFC1C8A0262070A4008C166A /* Configuration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EFC1C8B1262070E3008C166A /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC1C8B0262070E3008C166A /* Configuration.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		EF1539352633031A004DD930 /* midiDefines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = midiDefines.swift; sourceTree = "<group>"; };
 		EFC1C89D262070A4008C166A /* Configuration.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Configuration.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EFC1C8A0262070A4008C166A /* Configuration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Configuration.h; sourceTree = "<group>"; };
 		EFC1C8A1262070A4008C166A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -51,6 +53,7 @@
 				EFC1C8A0262070A4008C166A /* Configuration.h */,
 				EFC1C8A1262070A4008C166A /* Info.plist */,
 				EFC1C8B0262070E3008C166A /* Configuration.swift */,
+				EF1539352633031A004DD930 /* midiDefines.swift */,
 			);
 			path = Configuration;
 			sourceTree = "<group>";
@@ -135,6 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EFC1C8B1262070E3008C166A /* Configuration.swift in Sources */,
+				EF1539362633031A004DD930 /* midiDefines.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

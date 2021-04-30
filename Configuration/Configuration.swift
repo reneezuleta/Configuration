@@ -6,9 +6,12 @@
 //
 
 import Foundation
+
+
 public struct Config{
     public var confFileURL:URL
     public var midiFileURL:URL
+    public var sampleMidiFileURL:URL
     public var signature:String
     public var sigNum:Int8
     public var sigDen:Int8
@@ -18,36 +21,79 @@ public struct Config{
     public var ppqn:Int8
     public var measureCount:String
     public var measures:Int8
+    public var loopForEver:String
+    public var loop:Bool
+    public var rithmPattern:UInt32
+    public var rithmInstruments: [UInt16]
+    public var midiParams: midiDefines
+    
     public init(){
        //build the url we need to use for configuration file
-        midiFileURL = URL(string: "temp")!
-        confFileURL = URL(string: "temp")!
+        //midiFileURL = URL(string: "temp")!
+        //confFileURL = URL(string: "temp")!
         confFileURL = getDocDirectory()
         confFileURL = makeDir(thisURL:confFileURL,dir:"config")
         midiFileURL = makeDir(thisURL:confFileURL,dir:"midi")
+        sampleMidiFileURL = midiFileURL
         confFileURL.appendPathComponent("config.txt")
-        midiFileURL.appendPathComponent("midiTest.midi")
+        midiFileURL.appendPathComponent("myMidi.midi")
+        sampleMidiFileURL.appendPathComponent("sampleMidi.midi")
         signature = "4/4"
         sigNum = setSignatureNumerator(sig: signature)
         sigDen = setSignatureDenominator(sig: signature)
         beatPerMeasure = "120"
         bpm = 120
-        pulsesPerQuarterNote = "4"
-        ppqn = 4
+        pulsesPerQuarterNote = "8"
+        ppqn = 8
         measureCount = "4"
         measures = 4
+        loopForEver = "false"
+        loop = false
+        rithmPattern = 0xc888000f //1100100010001000
+        //rithmPattern = 0b1100100010001000
+        rithmInstruments = [46, // open high hat
+                           36, // bass drum 1
+                           0,0,
+                           36, // bass drum
+                           0,0,0,
+                           37, // sidestick
+                           0,0,0,
+                           36, // sidestick
+                           0,0,0,
+                           0,0,0,0,0,0,0,0,
+                           0,0,0,0,36,36,36,36]
+        midiParams = midiDefines()
+        
        do{
             print("try to read ",confFileURL)
             let entries = try String(contentsOf:confFileURL)
             for entry in entries.split(separator:"\n"){
                 print("processing entry ",entry)
-                if (entry.contains("sign=")){
-                    signature=String(entry.split(separator:"=")[1])
-                    sigNum = setSignatureNumerator(sig: signature)
-                    sigDen = setSignatureDenominator(sig: signature)
-                }
-                else if (entry.contains("bpm=")){
-                    bpm=Int16(entry.split(separator:"=")[1]) ?? 120
+                let param:String = String(entry.split(separator:"=")[0])
+                var valueInFile:String
+                switch(param){
+                case "sign=" :
+                    valueInFile = String(entry.split(separator:"=")[1])
+                    setSign(val: valueInFile)
+                    break
+                case "bpm=" :
+                    valueInFile = String(entry.split(separator:"=")[1])
+                    setBpm(val: valueInFile)
+                    break
+                case "ppqn=" :
+                    valueInFile = String(entry.split(separator:"=")[1])
+                    setPpqn(val: valueInFile)
+                    break
+                case "msrc" :
+                    valueInFile = String(entry.split(separator:"=")[1])
+                    setMsrc(val:valueInFile)
+                    break
+                case "loop" :
+                    valueInFile = String(entry.split(separator:"=")[1])
+                    setMsrc(val:valueInFile)
+                    break
+                default :
+                    print("reading config found unknow param")
                 }
             }
 
@@ -59,8 +105,28 @@ public struct Config{
     public func loadSystemSettings(message:String){
         print(message)
     }
+    public mutating func setSign(val :String) ->Void{
+        signature = val
+        sigNum = Int8(val.split(separator:"/")[0]) ?? 4;
+        sigDen = Int8(val.split(separator:"/")[1]) ?? 4;
+    }
+    public mutating func setBpm(val: String)-> Void{
+        beatPerMeasure = val
+        bpm = Int16(val) ?? 120
+    }
+    public mutating func setPpqn(val: String)-> Void{
+        pulsesPerQuarterNote = val
+        ppqn = Int8(val) ?? 4
+    }
+    public mutating func setMsrc(val: String)-> Void{
+        measureCount = val
+        measures = Int8(val) ?? 4
+    }
+    public mutating func setLoop(val: String)-> Void{
+        loopForEver = val
+        loop = Bool(val) ?? false
+    }
 }
-
 
 
 func getDocDirectory()->URL{
@@ -89,7 +155,9 @@ func saveConfiguration(configURL:URL,config:Config){
     entries.append("sign="+config.signature+"\n")
     entries.append("bpm="+String(config.bpm)+"\n")
     entries.append("ppqn="+String(config.ppqn)+"\n")
-    entries.append("msrc="+String(config.measureCount))
+    entries.append("msrc="+String(config.measureCount)+"\n")
+    entries.append("loop="+String(config.loopForEver)+"\n")
+
     print("in save configuration will save")
     var dataString:String = ""
     for entry in entries{
