@@ -6,7 +6,7 @@
 //
 
 import Foundation
-
+import utilities
 
 public struct Config{
     public var confFileURL:URL
@@ -49,9 +49,8 @@ public struct Config{
         measures = 4
         loopForEver = "false"
         loop = false
-        rithmPattern = 0xc888000f //1100100010001000
-        //rithmPattern = 0b1100100010001000
-        rithmInstruments = [46, // open high hat
+        rithmPattern = 0xF0001113 //nothe that ls bit is first
+        rithmInstruments = [46, // open high hat, offset 0 corresponds to bit 0
                            36, // bass drum 1
                            0,0,
                            36, // bass drum
@@ -125,6 +124,15 @@ public struct Config{
     public mutating func setLoop(val: String)-> Void{
         loopForEver = val
         loop = Bool(val) ?? false
+    }
+    public mutating func updateRithm(position: UInt8, newInstr :UInt16)-> Void {
+        if newInstr > 34 {
+            rithmPattern = setBitInWord(bitPosition: position, word32: rithmPattern)
+        }
+        else{
+            rithmPattern = clearBitInWord(bitPosition: position, word32: rithmPattern)
+        }
+        rithmInstruments[Int(position)] = newInstr
     }
 }
 
