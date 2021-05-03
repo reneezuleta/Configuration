@@ -132,7 +132,16 @@ public struct Config{
         else{
             rithmPattern = clearBitInWord(bitPosition: position, word32: rithmPattern)
         }
+        let arraySz = rithmInstruments.count
         rithmInstruments[Int(position)] = newInstr
+    }
+    public mutating func clearRithmPattern(){
+        rithmPattern = 0
+        let arraySz = rithmInstruments.count
+        for i in (0...rithmInstruments.count - 1) {
+            rithmInstruments[i] = 0
+        let arraySz1 = rithmInstruments.count
+        }
     }
 }
 

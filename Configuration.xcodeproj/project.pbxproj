@@ -10,7 +10,23 @@
 		EF1539362633031A004DD930 /* midiDefines.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1539352633031A004DD930 /* midiDefines.swift */; };
 		EFC1C8A2262070A4008C166A /* Configuration.h in Headers */ = {isa = PBXBuildFile; fileRef = EFC1C8A0262070A4008C166A /* Configuration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EFC1C8B1262070E3008C166A /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC1C8B0262070E3008C166A /* Configuration.swift */; };
+		EFCE486A26407ABE0031DC0F /* utilities.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EFCE486926407ABE0031DC0F /* utilities.framework */; };
+		EFCE486B26407ABE0031DC0F /* utilities.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EFCE486926407ABE0031DC0F /* utilities.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		EFCE486C26407ABE0031DC0F /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				EFCE486B26407ABE0031DC0F /* utilities.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		EF1539352633031A004DD930 /* midiDefines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = midiDefines.swift; sourceTree = "<group>"; };
@@ -18,6 +34,7 @@
 		EFC1C8A0262070A4008C166A /* Configuration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Configuration.h; sourceTree = "<group>"; };
 		EFC1C8A1262070A4008C166A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EFC1C8B0262070E3008C166A /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		EFCE486926407ABE0031DC0F /* utilities.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = utilities.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -25,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EFCE486A26407ABE0031DC0F /* utilities.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -36,6 +54,7 @@
 			children = (
 				EFC1C89F262070A4008C166A /* Configuration */,
 				EFC1C89E262070A4008C166A /* Products */,
+				EFCE486826407ABE0031DC0F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -56,6 +75,14 @@
 				EF1539352633031A004DD930 /* midiDefines.swift */,
 			);
 			path = Configuration;
+			sourceTree = "<group>";
+		};
+		EFCE486826407ABE0031DC0F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EFCE486926407ABE0031DC0F /* utilities.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -80,6 +107,7 @@
 				EFC1C899262070A4008C166A /* Sources */,
 				EFC1C89A262070A4008C166A /* Frameworks */,
 				EFC1C89B262070A4008C166A /* Resources */,
+				EFCE486C26407ABE0031DC0F /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
