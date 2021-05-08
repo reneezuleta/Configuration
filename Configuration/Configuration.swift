@@ -11,20 +11,24 @@ import utilities
 public struct Config{
     public var confFileURL:URL
     public var midiFileURL:URL
+    public var rythmFileURL:URL
     public var sampleMidiFileURL:URL
-    public var signature:String
-    public var sigNum:Int8
-    public var sigDen:Int8
-    public var beatPerMeasure:String
-    public var bpm:Int16
-    public var pulsesPerQuarterNote:String
-    public var ppqn:Int8
-    public var measureCount:String
-    public var measures:Int8
+    public var signatureString:String
+    public var sigNum:UInt8
+    public var sigDen:UInt8
+    public var signatureEventInfo:[UInt8]
+    public var bpmString:String
+    public var bpm:UInt16
+    public var resolutionString:String
+    public var resolution:Double
+    public var ticksPerMeasure:UInt8
+    public var microSecPerTick:UInt32
+    public var measureCountString:String
+    public var measureCount:UInt8
     public var loopForEver:String
     public var loop:Bool
     public var rithmPattern:UInt32
-    public var rithmInstruments: [UInt16]
+    public var rithmInstruments: [UInt8] // will default to 32 to allow max resolution
     public var midiParams: midiDefines
     
     public init(){
@@ -34,22 +38,29 @@ public struct Config{
         confFileURL = getDocDirectory()
         confFileURL = makeDir(thisURL:confFileURL,dir:"config")
         midiFileURL = makeDir(thisURL:confFileURL,dir:"midi")
+        rythmFileURL = makeDir(thisURL:confFileURL,dir:"rythm")
         sampleMidiFileURL = midiFileURL
         confFileURL.appendPathComponent("config.txt")
         midiFileURL.appendPathComponent("myMidi.midi")
         sampleMidiFileURL.appendPathComponent("sampleMidi.midi")
-        signature = "4/4"
-        sigNum = setSignatureNumerator(sig: signature)
-        sigDen = setSignatureDenominator(sig: signature)
-        beatPerMeasure = "120"
+        rythmFileURL.appendPathComponent("myRythm.midi")
+        signatureString = "4/4"
+        sigNum = 4 //UInt8(setSignatureNumerator(sig: signatureString))
+        sigDen = 4 //UInt8(setSignatureDenominator(sig: signatureString))
+        signatureEventInfo = [0x04,0x02,0x18,0x98]  // event for sign 4/4
+        bpmString = "120"
         bpm = 120
-        pulsesPerQuarterNote = "8"
-        ppqn = 8
-        measureCount = "4"
-        measures = 4
+        resolutionString = "1/16"
+        resolution = 1/16
+        ticksPerMeasure = 16
+        microSecPerTick = UInt32(1000000 * 60 / UInt32(bpm))
+        measureCountString = "4"
+        measureCount = 4
         loopForEver = "false"
         loop = false
         rithmPattern = 0xF0001113 //nothe that ls bit is first
+        // there will be ppqn * sig denominator slots
+        //for now allocate 32, may increase later
         rithmInstruments = [46, // open high hat, offset 0 corresponds to bit 0
                            36, // bass drum 1
                            0,0,
@@ -79,9 +90,9 @@ public struct Config{
                     valueInFile = String(entry.split(separator:"=")[1])
                     setBpm(val: valueInFile)
                     break
-                case "ppqn=" :
+                case "reso=" :
                     valueInFile = String(entry.split(separator:"=")[1])
-                    setPpqn(val: valueInFile)
+                    setReso(val: valueInFile)
                     break
                 case "msrc" :
                     valueInFile = String(entry.split(separator:"=")[1])
@@ -105,43 +116,78 @@ public struct Config{
         print(message)
     }
     public mutating func setSign(val :String) ->Void{
-        signature = val
-        sigNum = Int8(val.split(separator:"/")[0]) ?? 4;
-        sigDen = Int8(val.split(separator:"/")[1]) ?? 4;
+        signatureString = val
+        sigNum = UInt8(val.split(separator:"/")[0]) ?? 4;
+        sigDen = UInt8(val.split(separator:"/")[1]) ?? 4;
+        signatureEventInfo[0] = sigNum
+        signatureEventInfo[1] = getPowerOf2(number: sigDen)
+        signatureEventInfo[2] = 0x18  // 24 midi clocks per quarter note
+        signatureEventInfo[3] = 0x08  //  8 midi clocks per 1/32 note
     }
     public mutating func setBpm(val: String)-> Void{
-        beatPerMeasure = val
-        bpm = Int16(val) ?? 120
+        bpmString = val
+        bpm = UInt16(val) ?? 120
+        microSecPerTick = UInt32(1000000 * 60 / UInt32(bpm))
     }
-    public mutating func setPpqn(val: String)-> Void{
-        pulsesPerQuarterNote = val
-        ppqn = Int8(val) ?? 4
+    public mutating func setReso(val: String)-> Void{
+        resolutionString = val
+        if val.contains("/"){
+            //fractional case
+            let tempString = val.split(separator: "/")[1]
+            resolution = 1/Double(tempString)!
+            ticksPerMeasure = UInt8(tempString)!
+        }
+        else {
+            resolution = Double(val) ?? 1/16
+            ticksPerMeasure = UInt8(val) ?? 1
+        }
     }
     public mutating func setMsrc(val: String)-> Void{
-        measureCount = val
-        measures = Int8(val) ?? 4
+        measureCountString = val
+        measureCount = UInt8(val) ?? 4
     }
     public mutating func setLoop(val: String)-> Void{
         loopForEver = val
         loop = Bool(val) ?? false
     }
-    public mutating func updateRithm(position: UInt8, newInstr :UInt16)-> Void {
+    public mutating func updateRithm(position: UInt8, newInstr :UInt8)-> Void {
         if newInstr > 34 {
             rithmPattern = setBitInWord(bitPosition: position, word32: rithmPattern)
         }
         else{
             rithmPattern = clearBitInWord(bitPosition: position, word32: rithmPattern)
         }
-        let arraySz = rithmInstruments.count
         rithmInstruments[Int(position)] = newInstr
     }
     public mutating func clearRithmPattern(){
         rithmPattern = 0
-        let arraySz = rithmInstruments.count
         for i in (0...rithmInstruments.count - 1) {
             rithmInstruments[i] = 0
-        let arraySz1 = rithmInstruments.count
         }
+    }
+    public mutating func randomRithmPattern(){
+        clearRithmPattern()
+        for i in (0...ticksPerMeasure - 1) {
+            var randomPosition = arc4random_uniform(UInt32(ticksPerMeasure))
+            var randomInstrumentOffset = arc4random_uniform(UInt32(midiParams.percussionInstruments.count))
+            if randomInstrumentOffset > 0{ // 0 is none
+                rithmInstruments[Int(randomPosition)] = UInt8(midiParams.percussionInstruments[    Int(randomInstrumentOffset)].0)
+                var maskValue:UInt32 = 0x01
+                rithmPattern = rithmPattern | maskValue << randomPosition
+            }
+            //update pattern:
+        }
+    }
+    
+    public func getPowerOf2(number : UInt8) -> UInt8 {
+        var num = number
+        for i in (0...7){
+            num = num >> 1
+            if number == 0 {
+                return UInt8(i)
+            }
+        }
+        return 0
     }
 }
 
@@ -169,10 +215,10 @@ func makeDir(thisURL:URL,dir:String)->URL{
 
 func saveConfiguration(configURL:URL,config:Config){
     var entries=[String]()//define empty array of strings
-    entries.append("sign="+config.signature+"\n")
-    entries.append("bpm="+String(config.bpm)+"\n")
-    entries.append("ppqn="+String(config.ppqn)+"\n")
-    entries.append("msrc="+String(config.measureCount)+"\n")
+    entries.append("sign="+config.signatureString+"\n")
+    entries.append("bpm="+config.bpmString+"\n")
+    entries.append("reso="+config.resolutionString+"\n")
+    entries.append("msrc="+config.measureCountString+"\n")
     entries.append("loop="+String(config.loopForEver)+"\n")
 
     print("in save configuration will save")
@@ -198,15 +244,6 @@ func deleteFile(fileURL:URL){
     }
 }
 
-func setSignatureNumerator(sig:String)->Int8{
-    //coalesce to 1 if string does not show a number
-    return Int8(sig.split(separator:"/")[0]) ?? 1;
-}
-
-func setSignatureDenominator(sig:String)->Int8{
-    //coalesce to 1 if string does not show a number
-    return Int8(sig.split(separator:"/")[1]) ?? 1;
-}
 /*
  Following is to test in playground
  */
