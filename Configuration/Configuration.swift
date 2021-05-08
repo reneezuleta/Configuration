@@ -25,7 +25,7 @@ public struct Config{
     public var microSecPerTick:UInt32
     public var measureCountString:String
     public var measureCount:UInt8
-    public var loopForEver:String
+    public var loopForEverString:String
     public var loop:Bool
     public var rithmPattern:UInt32
     public var rithmInstruments: [UInt8] // will default to 32 to allow max resolution
@@ -56,7 +56,7 @@ public struct Config{
         microSecPerTick = UInt32(1000000 * 60 / UInt32(bpm))
         measureCountString = "4"
         measureCount = 4
-        loopForEver = "false"
+        loopForEverString = "0" //short for false
         loop = false
         rithmPattern = 0xF0001113 //nothe that ls bit is first
         // there will be ppqn * sig denominator slots
@@ -147,7 +147,7 @@ public struct Config{
         measureCount = UInt8(val) ?? 4
     }
     public mutating func setLoop(val: String)-> Void{
-        loopForEver = val
+        loopForEverString = val
         loop = Bool(val) ?? false
     }
     public mutating func updateRithm(position: UInt8, newInstr :UInt8)-> Void {
@@ -219,7 +219,7 @@ func saveConfiguration(configURL:URL,config:Config){
     entries.append("bpm="+config.bpmString+"\n")
     entries.append("reso="+config.resolutionString+"\n")
     entries.append("msrc="+config.measureCountString+"\n")
-    entries.append("loop="+String(config.loopForEver)+"\n")
+    entries.append("loop="+String(config.loopForEverString)+"\n")
 
     print("in save configuration will save")
     var dataString:String = ""
