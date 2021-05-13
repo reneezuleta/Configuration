@@ -8,6 +8,21 @@
 import Foundation
 import utilities
 
+
+public struct Scale{
+    public var name:String  // C, C#, D ......
+    public var type:String  // major, minor
+}
+
+public struct Channel{
+    public var id : UInt8
+    public var type : String // melody, chord, disabled, opposing
+    public var related:[UInt8]
+    public var scale:Scale
+    public var instrument :UInt8
+    public var instrumentRange:String
+}
+
 public struct Config{
     public var confFileURL:URL
     public var midiFileURL:URL
@@ -30,6 +45,7 @@ public struct Config{
     public var rithmPattern:UInt32
     public var rithmInstruments: [UInt8] // will default to 32 to allow max resolution
     public var midiParams: midiDefines
+    public var channel :[Channel]
     
     public init(){
        //build the url we need to use for configuration file
@@ -73,8 +89,15 @@ public struct Config{
                            0,0,0,0,0,0,0,0,
                            0,0,0,0,36,36,36,36]
         midiParams = midiDefines()
+        let relatedChannels:[UInt8] = [0,0,0]
+        let defaultRange :[UInt8] = [0,1,2,3,4,5,6,7,8,9]   // 10 octaves in piano
+        channel = [Channel]()
+        for i in (0...16){
+            channel.append(Channel(id: UInt8(i), type: "melody", related: relatedChannels, scale: Scale(name: "C",type: "Major"), instrument: 0, instrumentRange: "middle"))
+        }
         
-       do{
+        
+        do{
             print("try to read ",confFileURL)
             let entries = try String(contentsOf:confFileURL)
             for entry in entries.split(separator:"\n"){
@@ -177,6 +200,30 @@ public struct Config{
             }
             //update pattern:
         }
+    }
+    
+    public mutating func setChannelType(channelId:Int, val:String) ->Void {
+        channel[channelId].type = val
+    }
+    
+    public mutating func setChannelInstrument(channelId:Int, val:UInt8){
+        channel[channelId].instrument = val
+    }
+    
+    public mutating func setChannelScale(channelId:Int, val:String){
+        channel[channelId].scale.name = val
+    }
+    
+    public mutating func setChannelScaleName(channelId:Int, val:String){
+        channel[channelId].scale.name = val
+    }
+    
+    public mutating func setChannelScaleType(channelId:Int, val:String){
+        channel[channelId].scale.type = val
+    }
+    
+    public mutating func setChannelRange(channelId:Int, val:String){
+        channel[channelId].instrumentRange = val
     }
     
     public func getPowerOf2(number : UInt8) -> UInt8 {
