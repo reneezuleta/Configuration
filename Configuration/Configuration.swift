@@ -11,7 +11,8 @@ import utilities
 
 public struct Scale{
     public var name:String  // C, C#, D ......
-    public var type:String  // major, minor
+    public var sharp:String // #  or space
+    public var type:String  // major or  minor
 }
 
 public struct Channel{
@@ -93,7 +94,7 @@ public struct Config{
         let defaultRange :[UInt8] = [0,1,2,3,4,5,6,7,8,9]   // 10 octaves in piano
         channel = [Channel]()
         for i in (0...16){
-            channel.append(Channel(id: UInt8(i), type: "melody", related: relatedChannels, scale: Scale(name: "C",type: "Major"), instrument: 0, instrumentRange: "middle"))
+            channel.append(Channel(id: UInt8(i), type: "melody", related: relatedChannels, scale: Scale(name: "C",sharp: " ",type: "Major"), instrument: 0, instrumentRange: "middle"))
         }
         
         
@@ -169,9 +170,13 @@ public struct Config{
         measureCountString = val
         measureCount = UInt8(val) ?? 4
     }
-    public mutating func setLoop(val: String)-> Void{
-        loopForEverString = val
-        loop = Bool(val) ?? false
+    public mutating func togleLoop()-> Void{
+        if loop {
+            loop = false
+        }
+        else{
+            loop = true
+        }
     }
     public mutating func updateRithm(position: UInt8, newInstr :UInt8)-> Void {
         if newInstr > 34 {
@@ -190,12 +195,12 @@ public struct Config{
     }
     public mutating func randomRithmPattern(){
         clearRithmPattern()
-        for i in (0...ticksPerMeasure - 1) {
-            var randomPosition = arc4random_uniform(UInt32(ticksPerMeasure))
-            var randomInstrumentOffset = arc4random_uniform(UInt32(midiParams.percussionInstruments.count))
+        for _ in (0...ticksPerMeasure - 1) {
+            let randomPosition = arc4random_uniform(UInt32(ticksPerMeasure))
+            let randomInstrumentOffset = arc4random_uniform(UInt32(midiParams.percussionInstruments.count))
             if randomInstrumentOffset > 0{ // 0 is none
                 rithmInstruments[Int(randomPosition)] = UInt8(midiParams.percussionInstruments[    Int(randomInstrumentOffset)].0)
-                var maskValue:UInt32 = 0x01
+                let maskValue:UInt32 = 0x01
                 rithmPattern = rithmPattern | maskValue << randomPosition
             }
             //update pattern:
@@ -210,21 +215,37 @@ public struct Config{
         channel[channelId].instrument = val
     }
     
-    public mutating func setChannelScale(channelId:Int, val:String){
-        channel[channelId].scale.name = val
+    public mutating func setChannelRange(channelId:Int, val:String){
+        channel[channelId].instrumentRange = val
     }
     
     public mutating func setChannelScaleName(channelId:Int, val:String){
         channel[channelId].scale.name = val
     }
     
+    public mutating func setChannelScaleSharp(channelId:Int, val:String){
+        channel[channelId].scale.sharp = val
+    }
+    public mutating func togleScaleSharp(channelId:Int){
+        if channel[channelId].scale.sharp == "#" {
+            channel[channelId].scale.sharp = " "
+        }
+        else {
+            channel[channelId].scale.sharp = "#"
+        }
+    }
     public mutating func setChannelScaleType(channelId:Int, val:String){
         channel[channelId].scale.type = val
     }
-    
-    public mutating func setChannelRange(channelId:Int, val:String){
-        channel[channelId].instrumentRange = val
+    public mutating func togleScaleType(channelId:Int){
+        if channel[channelId].scale.type == "Major" {
+            channel[channelId].scale.type = "Minor"
+        }
+        else {
+            channel[channelId].scale.type = "Major"
+        }
     }
+ 
     
     public func getPowerOf2(number : UInt8) -> UInt8 {
         var num = number
