@@ -13,11 +13,13 @@ public struct Scale{
     public var name:String  // C, C#, D ......
     public var sharp:String // #  or space
     public var type:String  // major or  minor
+    public var fullName:String
 }
+
 
 public struct Channel{
     public var id : UInt8
-    public var type : String // melody, chord, disabled, opposing
+    public var type : String // Melody, Chord, Silent, Opposing
     public var related:[UInt8]
     public var scale:Scale
     public var instrument :UInt8
@@ -25,8 +27,11 @@ public struct Channel{
 }
 
 public struct Config{
+    public var confPathURL:URL
     public var confFileURL:URL
+    public var midiPathURL:URL
     public var midiFileURL:URL
+    public var rythmPathURL:URL
     public var rythmFileURL:URL
     public var sampleMidiFileURL:URL
     public var signatureString:String
@@ -52,15 +57,28 @@ public struct Config{
        //build the url we need to use for configuration file
         //midiFileURL = URL(string: "temp")!
         //confFileURL = URL(string: "temp")!
-        confFileURL = getDocDirectory()
-        confFileURL = makeDir(thisURL:confFileURL,dir:"config")
-        midiFileURL = makeDir(thisURL:confFileURL,dir:"midi")
-        rythmFileURL = makeDir(thisURL:confFileURL,dir:"rythm")
-        sampleMidiFileURL = midiFileURL
+        let baseURL :URL = getDocDirectory()
+        //create all needed directories in docs dir
+        confPathURL = makeDir(thisURL:baseURL,dir:"config")
+        midiPathURL = makeDir(thisURL:baseURL,dir:"midi")
+        rythmPathURL = makeDir(thisURL:baseURL,dir:"rythm")
+        
+        confFileURL = confPathURL
         confFileURL.appendPathComponent("config.txt")
+        
+       
+        midiFileURL = midiPathURL
         midiFileURL.appendPathComponent("myMidi.midi")
+        print ("the midi file is at \(midiFileURL.absoluteString)")
+        print ("the midi file path \(midiFileURL.path)")
+        sampleMidiFileURL = midiPathURL
         sampleMidiFileURL.appendPathComponent("sampleMidi.midi")
+        
+        
+        rythmFileURL = rythmPathURL
         rythmFileURL.appendPathComponent("myRythm.midi")
+
+        
         signatureString = "4/4"
         sigNum = 4 //UInt8(setSignatureNumerator(sig: signatureString))
         sigDen = 4 //UInt8(setSignatureDenominator(sig: signatureString))
@@ -75,27 +93,30 @@ public struct Config{
         measureCount = 4
         loopForEverString = "0" //short for false
         loop = false
-        rithmPattern = 0xF0001113 //nothe that ls bit is first
+        rithmPattern = 0x01010101 //nothe that ls bit is first
         // there will be ppqn * sig denominator slots
         //for now allocate 32, may increase later
-        rithmInstruments = [46, // open high hat, offset 0 corresponds to bit 0
-                           36, // bass drum 1
-                           0,0,
-                           36, // bass drum
-                           0,0,0,
-                           37, // sidestick
-                           0,0,0,
-                           36, // sidestick
-                           0,0,0,
-                           0,0,0,0,0,0,0,0,
-                           0,0,0,0,36,36,36,36]
+        rithmInstruments = [UInt8]()
+        for _ in 0...31 {
+            rithmInstruments.append(34)  // 34 means no instrument
+        }
+        // to match defaulpt pattern
+        rithmInstruments[0] = 46  // open high hat  bit 0
+        rithmInstruments[8] = 37  // side stick   bit 8
+        rithmInstruments[16] = 41  // low tom   bit 16
+        rithmInstruments[24] = 37  // side stick   bit 24
+        
         midiParams = midiDefines()
         let relatedChannels:[UInt8] = [0,0,0]
         let defaultRange :[UInt8] = [0,1,2,3,4,5,6,7,8,9]   // 10 octaves in piano
         channel = [Channel]()
-        for i in (0...16){
-            channel.append(Channel(id: UInt8(i), type: "melody", related: relatedChannels, scale: Scale(name: "C",sharp: " ",type: "Major"), instrument: 0, instrumentRange: "middle"))
+        for i in (0..<16){
+            channel.append(Channel(id: UInt8(i), type: "Silent", related: relatedChannels, scale: Scale(name: "C",sharp: " ",type: "Major",fullName: "C Major"), instrument: 0, instrumentRange: "Middle"))
         }
+        channel[0].type = "Melody"
+        channel[1].type = "Opposing"
+        channel[2].type = "Chord"
+        channel[3].type = "Chord"
         
         
         do{
@@ -150,7 +171,7 @@ public struct Config{
     }
     public mutating func setBpm(val: String)-> Void{
         bpmString = val
-        bpm = UInt16(val) ?? 120
+        bpm = UInt16(val) ?? 60
         microSecPerTick = UInt32(1000000 * 60 / UInt32(bpm))
     }
     public mutating func setReso(val: String)-> Void{
@@ -221,28 +242,35 @@ public struct Config{
     
     public mutating func setChannelScaleName(channelId:Int, val:String){
         channel[channelId].scale.name = val
+        channel[channelId].scale.fullName = val + channel[channelId].scale.sharp + " " +
+                                            channel[channelId].scale.type
     }
     
     public mutating func setChannelScaleSharp(channelId:Int, val:String){
         channel[channelId].scale.sharp = val
+        channel[channelId].scale.fullName = channel[channelId].scale.name + val + " " +
+                                            channel[channelId].scale.type
     }
     public mutating func togleScaleSharp(channelId:Int){
         if channel[channelId].scale.sharp == "#" {
-            channel[channelId].scale.sharp = " "
+            setChannelScaleSharp(channelId: channelId, val: " ")
         }
         else {
-            channel[channelId].scale.sharp = "#"
+            setChannelScaleSharp(channelId: channelId, val: "#")
         }
     }
     public mutating func setChannelScaleType(channelId:Int, val:String){
         channel[channelId].scale.type = val
+        channel[channelId].scale.fullName = channel[channelId].scale.name +
+                                            channel[channelId].scale.sharp + " " + val
+        
     }
     public mutating func togleScaleType(channelId:Int){
         if channel[channelId].scale.type == "Major" {
-            channel[channelId].scale.type = "Minor"
+            setChannelScaleType(channelId: channelId, val: "Minor")
         }
         else {
-            channel[channelId].scale.type = "Major"
+            setChannelScaleType(channelId: channelId, val: "Major")
         }
     }
  
@@ -251,7 +279,7 @@ public struct Config{
         var num = number
         for i in (0...7){
             num = num >> 1
-            if number == 0 {
+            if num == 0 {
                 return UInt8(i)
             }
         }
