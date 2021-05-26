@@ -8,6 +8,12 @@
 import Foundation
 import utilities
 
+public enum TuneType{  // used to know what was the type of the last tune played
+    case melody    // used to createtune
+    case beat    // used to createtune
+    case tune           // used to createtune (both melody and beat
+    case rythmGrooves  // used for createRythm case
+}
 
 public struct Scale{
     public var name:String  // C, C#, D ......
@@ -29,11 +35,10 @@ public struct Channel{
 public struct Config{
     public var confPathURL:URL
     public var confFileURL:URL
-    public var midiPathURL:URL
+    public var tunePathURL:URL
     public var midiFileURL:URL
     public var rythmPathURL:URL
     public var rythmFileURL:URL
-    public var sampleMidiFileURL:URL
     public var signatureString:String
     public var sigNum:UInt8
     public var sigDen:UInt8
@@ -55,28 +60,20 @@ public struct Config{
     
     public init(){
        //build the url we need to use for configuration file
-        //midiFileURL = URL(string: "temp")!
-        //confFileURL = URL(string: "temp")!
         let baseURL :URL = getDocDirectory()
         //create all needed directories in docs dir
         confPathURL = makeDir(thisURL:baseURL,dir:"config")
-        midiPathURL = makeDir(thisURL:baseURL,dir:"midi")
+        tunePathURL = makeDir(thisURL:baseURL,dir:"tune")
         rythmPathURL = makeDir(thisURL:baseURL,dir:"rythm")
         
         confFileURL = confPathURL
-        confFileURL.appendPathComponent("config.txt")
-        
-       
-        midiFileURL = midiPathURL
-        midiFileURL.appendPathComponent("myMidi.midi")
-        print ("the midi file is at \(midiFileURL.absoluteString)")
+        confFileURL.appendPathComponent("default.txt")
+        print ("the config file path \(confFileURL.path)")
+        midiFileURL = tunePathURL
+        midiFileURL.appendPathComponent("defaultMelody.midi")
         print ("the midi file path \(midiFileURL.path)")
-        sampleMidiFileURL = midiPathURL
-        sampleMidiFileURL.appendPathComponent("sampleMidi.midi")
-        
-        
         rythmFileURL = rythmPathURL
-        rythmFileURL.appendPathComponent("myRythm.midi")
+        rythmFileURL.appendPathComponent("defaultRythm.midi")
 
         
         signatureString = "4/4"
@@ -93,7 +90,7 @@ public struct Config{
         measureCount = 4
         loopForEverString = "0" //short for false
         loop = false
-        rithmPattern = 0x01010101 //nothe that ls bit is first
+        rithmPattern = 0x11111111 //nothe that ls bit is first
         // there will be ppqn * sig denominator slots
         //for now allocate 32, may increase later
         rithmInstruments = [UInt8]()
@@ -101,14 +98,17 @@ public struct Config{
             rithmInstruments.append(34)  // 34 means no instrument
         }
         // to match defaulpt pattern
-        rithmInstruments[0] = 46  // open high hat  bit 0
-        rithmInstruments[8] = 37  // side stick   bit 8
-        rithmInstruments[16] = 41  // low tom   bit 16
-        rithmInstruments[24] = 37  // side stick   bit 24
+        rithmInstruments[0] = 42  // closed hat  bit 0
+        rithmInstruments[4] = 42  // closed hat  bit 0
+        rithmInstruments[8] = 38  // acoustic snare   bit 8
+        rithmInstruments[12] = 42  // closed hat  bit 0
+        rithmInstruments[16] = 42  // low tom   bit 16
+        rithmInstruments[20] = 42  // low tom   bit 16
+        rithmInstruments[24] = 38  // side stick   bit 24
+        rithmInstruments[28] = 42  // low tom   bit 16
         
         midiParams = midiDefines()
         let relatedChannels:[UInt8] = [0,0,0]
-        let defaultRange :[UInt8] = [0,1,2,3,4,5,6,7,8,9]   // 10 octaves in piano
         channel = [Channel]()
         for i in (0..<16){
             channel.append(Channel(id: UInt8(i), type: "Silent", related: relatedChannels, scale: Scale(name: "C",sharp: " ",type: "Major",fullName: "C Major"), instrument: 0, instrumentRange: "Middle"))
@@ -118,7 +118,7 @@ public struct Config{
         channel[2].type = "Chord"
         channel[3].type = "Chord"
         
-        
+        //attempt to read defaulr config file
         do{
             print("try to read ",confFileURL)
             let entries = try String(contentsOf:confFileURL)
@@ -157,9 +157,7 @@ public struct Config{
             print("no config file, use hardcoded values")
         }
     }
-    public func loadSystemSettings(message:String){
-        print(message)
-    }
+
     public mutating func setSign(val :String) ->Void{
         signatureString = val
         sigNum = UInt8(val.split(separator:"/")[0]) ?? 4;
@@ -309,36 +307,7 @@ func makeDir(thisURL:URL,dir:String)->URL{
     return newURL
 }
 
-func saveConfiguration(configURL:URL,config:Config){
-    var entries=[String]()//define empty array of strings
-    entries.append("sign="+config.signatureString+"\n")
-    entries.append("bpm="+config.bpmString+"\n")
-    entries.append("reso="+config.resolutionString+"\n")
-    entries.append("msrc="+config.measureCountString+"\n")
-    entries.append("loop="+String(config.loopForEverString)+"\n")
 
-    print("in save configuration will save")
-    var dataString:String = ""
-    for entry in entries{
-        dataString += "\(entry)"
-    }
-    print (dataString)
-    do{
-        try dataString.write(to:configURL,atomically: true,encoding: .utf8)
-    }catch{
-        print("error writing config file")
-    }
-}
-
-func deleteFile(fileURL:URL){
-    if (FileManager.default.fileExists(atPath: fileURL.path)){
-        do{
-            try FileManager.default.removeItem(at:fileURL)
-        }catch{
-            print("error deleting file")
-        }
-    }
-}
 
 /*
  Following is to test in playground
