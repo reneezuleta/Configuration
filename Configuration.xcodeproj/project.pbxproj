@@ -53,7 +53,6 @@
 			isa = PBXGroup;
 			children = (
 				EFC1C89F262070A4008C166A /* Configuration */,
-				EFC1C89E262070A4008C166A /* Products */,
 				EFCE486826407ABE0031DC0F /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -64,6 +63,7 @@
 				EFC1C89D262070A4008C166A /* Configuration.framework */,
 			);
 			name = Products;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		EFC1C89F262070A4008C166A /* Configuration */ = {
@@ -73,6 +73,7 @@
 				EFC1C8A1262070A4008C166A /* Info.plist */,
 				EFC1C8B0262070E3008C166A /* Configuration.swift */,
 				EF1539352633031A004DD930 /* midiDefines.swift */,
+				EFC1C89E262070A4008C166A /* Products */,
 			);
 			path = Configuration;
 			sourceTree = "<group>";
