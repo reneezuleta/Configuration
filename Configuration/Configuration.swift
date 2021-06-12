@@ -44,6 +44,9 @@ public struct Config{
     public var sigNum:UInt8
     public var sigDen:UInt8
     public var signatureEventInfo:[UInt8]
+    public var altSigNum:UInt8
+    public var altSigDen:UInt8
+    public var altSignatureEventInfo:[UInt8]
     public var bpm:UInt16
     public var resolutionString:String
     public var resolution:Double
@@ -53,12 +56,16 @@ public struct Config{
     public var measureCount:UInt8
     //public var loopForEverString:String
     public var loop:Bool
+    public var withPolyRythm:Bool
+    public var firstPolyValue:UInt8
+    public var secondPolyValue:UInt8
     public var rithmPattern:UInt32
     public var preloadedGrooves :[UInt32]
     public let defaultInstrument1 :(UInt8,String) = (UInt8(42),"Closed Hi Hat")
     public let defaultInstrument2 :(UInt8,String) = (UInt8(38),"Acustic Snare")
     public let defaultRandomBeatInstr : (UInt8,String) = (UInt8(36),"Bass Drum 1")
     public let defaultStartMarkerInstr: (UInt8,String) = (UInt8(49),"Crash Cymbal 1")
+    public let defaultStartMarker2Instr: (UInt8,String) = (UInt8(53),"Ride Bell")
     public var rithmInstruments:  [(UInt8,String)]  //  will be size 32
     //public var midiParams: midiDefines
     public var channel :[Channel]
@@ -84,7 +91,19 @@ public struct Config{
         signatureString = "4/4"
         sigNum = 4 //UInt8(setSignatureNumerator(sig: signatureString))
         sigDen = 4 //UInt8(setSignatureDenominator(sig: signatureString))
-        signatureEventInfo = [0x04,0x02,0x18,0x98]  // event for sign 4/4
+        // signature event ff 58 04 nn dd cc bb
+        // nn numerator
+        // dd denominator power of 2
+        // cc number of midiclocks in a metronome click, defaulting to 36
+        // assuming 24 midiclocks pwe queter note
+        //  if c = 48, metronome clicks every 2 quarter notes
+        //     c = 24, metronome clicks every quarter note
+        // bb number of notated 32nd notes in a midi quarter note (24 clocks/4 = 8, usual value)
+        // setting bb to 8 makes for 24 midi clocks per quarter note
+        signatureEventInfo = [0x04,0x02,0x24,0x08]  // event for sign 4/4
+        altSigNum = 13 //UInt8(setSignatureNumerator(sig: signatureString))
+        altSigDen = 8
+        altSignatureEventInfo = [0x0D,0x03,0x24,0x08]  // event for alt signature
         bpm = 120
         resolutionString = "1/16"
         resolution = 1/16
@@ -94,10 +113,13 @@ public struct Config{
         measureCount = 4
         //loopForEverString = "0" //short for false
         loop = false
+        withPolyRythm = false
+        firstPolyValue  = 0
+        secondPolyValue  = 0
         preloadedGrooves = [0x11111111,
                            0x21212121,
                            0x13131313,
-                           0,21412141]
+                           0x21412141]
         rithmPattern = preloadedGrooves[0] //nothe that ls bit is first
         // there will be ppqn * sig denominator slots
         //for now allocate 32, may increase later
